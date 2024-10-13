@@ -124,7 +124,7 @@ init settings world _ =
                 Resize (round viewport.width) (round viewport.height)
             )
             Browser.Dom.getViewport
-        , Jeep.load { texture = "Jeep.png", mesh = "Jeep.obj.txt" } |> Task.attempt JeepLoaded
+        , Jeep.load { texture = settings.jeep.texture, mesh = settings.jeep.mesh } |> Task.attempt JeepLoaded
         ]
     )
 
