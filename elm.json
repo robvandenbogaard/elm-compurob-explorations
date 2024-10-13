@@ -1,6 +1,6 @@
 {
     "type": "package",
-    "name": "robvandenbogaard/compurob-explorations",
+    "name": "robvandenbogaard/elm-compurob-explorations",
     "summary": "Experimental libraries for use in the Compurob workshop.",
     "license": "BSD-3-Clause",
     "version": "1.0.0",
