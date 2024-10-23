@@ -3,7 +3,7 @@
     "name": "robvandenbogaard/elm-compurob-explorations",
     "summary": "Experimental libraries for use in the Compurob workshop.",
     "license": "BSD-3-Clause",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "exposed-modules": [
         "Compurob.Game3d.Racing.V1",
         "Compurob.Game3d.Racing.V2",

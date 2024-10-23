@@ -40,7 +40,7 @@ import Compurob.Game3d.Simulation.Car as Car exposing (Wheel)
 import Direction3d
 import Duration
 import Eigenwijs.Playground as P
-import Frame3d
+import Frame3d exposing (Frame3d)
 import Html exposing (Html)
 import Html.Attributes
 import Json.Decode
@@ -99,6 +99,7 @@ type alias Model state =
     , settings : Maybe Car.Settings
     , state : state
     , playground : P.Picture
+    , camera : Camera
     }
 
 
@@ -115,6 +116,14 @@ type Command
     = Speed Float
     | Steer Float
     | Brake
+    | UseEyesOf Camera
+
+
+type Camera
+    = Fixed
+    | Chauffeur
+    | Spectator
+    | Chaser
 
 
 type alias Url =
@@ -186,6 +195,7 @@ init settings world state _ =
       , settings = Nothing
       , state = state
       , playground = Tuple.first <| P.pictureInit ()
+      , camera = Fixed
       }
     , Cmd.batch
         [ Task.perform
@@ -340,9 +350,15 @@ gameUpdate settings update msg model =
         KeyUp Brake ->
             { model | braking = False }
 
+        KeyDown (UseEyesOf camera) ->
+            { model | camera = camera }
+
+        KeyUp (UseEyesOf _) ->
+            model
+
 
 view : Overlay state -> Model state -> Html (Msg P.PictureMsg)
-view overlay { world, jeep, dimensions, settings, state, playground } =
+view overlay { world, jeep, dimensions, settings, state, playground, camera } =
     Html.div []
         [ Html.div
             [ Html.Attributes.style "position" "absolute"
@@ -354,7 +370,19 @@ view overlay { world, jeep, dimensions, settings, state, playground } =
                 { upDirection = Direction3d.z
                 , sunlightDirection = Direction3d.xyZ (Angle.degrees -15) (Angle.degrees -45)
                 , shadows = True
-                , camera = camera
+                , camera =
+                    case camera of
+                        Fixed ->
+                            cameraFixed
+
+                        Chauffeur ->
+                            cameraLookingFrom (carFrameIn world) (Point3d.meters 0 -0.3 2.25)
+
+                        Spectator ->
+                            cameraLookingAt (carPositionIn world)
+
+                        Chaser ->
+                            cameraLookingFrom (carFrameIn world) (Point3d.meters 0 -5 4)
                 , dimensions = dimensions
                 , background = Scene3d.transparentBackground
                 , clipDepth = Length.meters 0.1
@@ -375,8 +403,8 @@ view overlay { world, jeep, dimensions, settings, state, playground } =
         ]
 
 
-camera : Camera3d Meters WorldCoordinates
-camera =
+cameraFixed : Camera3d Meters WorldCoordinates
+cameraFixed =
     Camera3d.perspective
         { viewpoint =
             Viewpoint3d.lookAt
@@ -385,6 +413,71 @@ camera =
                 , upDirection = Direction3d.positiveZ
                 }
         , verticalFieldOfView = Angle.degrees 24
+        }
+
+
+carPositionIn world =
+    List.foldl
+        (\body pos ->
+            case Body.data body of
+                Car _ ->
+                    Body.originPoint body
+
+                _ ->
+                    pos
+        )
+        (Point3d.meters 0 -10 0)
+        (World.bodies world)
+
+
+carFrameIn world =
+    List.foldl
+        (\body pos ->
+            case Body.data body of
+                Car _ ->
+                    Body.frame body
+
+                _ ->
+                    pos
+        )
+        Frame3d.atOrigin
+        (World.bodies world)
+
+
+cameraLookingAt : Point3d Meters WorldCoordinates -> Camera3d Meters WorldCoordinates
+cameraLookingAt target =
+    Camera3d.perspective
+        { viewpoint =
+            Viewpoint3d.lookAt
+                { eyePoint =
+                    Point3d.meters 0 -60 10
+                        |> Point3d.translateBy
+                            (Vector3d.from Point3d.origin target)
+                , focalPoint =
+                    Point3d.meters 0 0 -5
+                        |> Point3d.translateBy
+                            (Vector3d.from Point3d.origin target)
+                , upDirection = Direction3d.positiveZ
+                }
+        , verticalFieldOfView = Angle.degrees 30
+        }
+
+
+cameraLookingFrom : Frame3d Meters WorldCoordinates { defines : BodyCoordinates } -> Point3d Meters BodyCoordinates -> Camera3d Meters WorldCoordinates
+cameraLookingFrom frame point =
+    Camera3d.perspective
+        { viewpoint =
+            Viewpoint3d.lookAt
+                { eyePoint =
+                    point
+                        |> Point3d.placeIn frame
+                , focalPoint =
+                    Point3d.meters 0 100 2
+                        |> Point3d.placeIn frame
+                , upDirection =
+                    Frame3d.zDirection frame
+                }
+        , verticalFieldOfView = Angle.degrees 90
         }
 
 
@@ -597,6 +690,18 @@ keyDecoder toMsg =
 
                     "b" ->
                         Json.Decode.succeed (toMsg Brake)
+
+                    "0" ->
+                        Json.Decode.succeed (toMsg (UseEyesOf Fixed))
+
+                    "1" ->
+                        Json.Decode.succeed (toMsg (UseEyesOf Chauffeur))
+
+                    "2" ->
+                        Json.Decode.succeed (toMsg (UseEyesOf Spectator))
+
+                    "3" ->
+                        Json.Decode.succeed (toMsg (UseEyesOf Chaser))
 
                     _ ->
                         Json.Decode.fail ("Unrecognized key: " ++ string)
