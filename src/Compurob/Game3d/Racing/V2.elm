@@ -132,6 +132,12 @@ type alias Scene =
     List (Body Id)
 
 
+{-| Settings include the url for the Jeep texture, its mesh file, and a
+configurator function that takes the Jeep's settings so you can change
+them. We use a function for configuring the car's properties because at
+initialisation the Jeep is not loaded yet and we need some mesaurements
+on it to correctly configure it.
+-}
 type alias Settings =
     { jeep : { texture : Url, mesh : Url, configurator : Car.Settings -> Car.Settings }
     }
@@ -500,6 +506,9 @@ slope =
         |> Body.moveTo (Point3d.meters 0 -2 1.5)
 
 
+{-| Create a block Body which can be added to the world, with the supplied
+dimensions (in meters), and a solid color.
+-}
 block : Color -> Float -> Float -> Float -> Body Id
 block color w h d =
     let
@@ -513,28 +522,43 @@ block color w h d =
     Body.block boxBlock (Obstacle color boxBlock)
 
 
+{-| Translate (move) a Body for the amounts of meters in the
+x, y, and z direction.
+-}
 move : Float -> Float -> Float -> (Body data -> Body data)
 move x y z =
     Body.moveTo (Point3d.meters x y z)
 
 
+{-| Rotate a Body around the X axis.
+-}
 rotateX angle =
     Body.rotateAround Axis3d.x (Angle.degrees angle)
 
 
+{-| Rotate a Body around the Y axis.
+-}
 rotateY angle =
     Body.rotateAround Axis3d.y (Angle.degrees angle)
 
 
+{-| Rotate a Body around the Z axis.
+-}
 rotateZ angle =
     Body.rotateAround Axis3d.z (Angle.degrees angle)
 
 
+{-| Indicate that this Body is dynamic, it gets included in the physics
+simulation, so gravity will be applied, which is why it asks for the mass
+of the body.
+-}
 withPhysics : { mass : Mass } -> (Body data -> Body data)
 withPhysics { mass } =
     Body.withBehavior (Body.dynamic mass)
 
 
+{-| Create a box you can add to the world
+-}
 box : Point3d Meters WorldCoordinates -> Body Id
 box position =
     let
