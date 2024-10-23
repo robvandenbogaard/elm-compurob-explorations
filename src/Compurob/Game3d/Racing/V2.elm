@@ -1,5 +1,5 @@
 module Compurob.Game3d.Racing.V2 exposing
-    ( game, World, exampleWorld, id
+    ( game, World, exampleWorld
     , box, floor, slope
     , Settings
     , block, move, rotateX, rotateY, rotateZ, withPhysics
@@ -16,13 +16,13 @@ Press arrow keys to drive, "b" to brake.
 Try to add more obstacles to the demo by changing the initialWorld,
 or tweak the settings in the `RayCastCar.Jeep` module!
 
-@docs game, World, exampleWorld, id
+@docs game, World, exampleWorld
 
 @docs box, floor, slope
 
 @docs Settings
 
-@doc block, move, rotateX, rotateY, rotateZ, withPhysics
+@docs block, move, rotateX, rotateY, rotateZ, withPhysics
 
 -}
 
@@ -532,18 +532,21 @@ move x y z =
 
 {-| Rotate a Body around the X axis.
 -}
+rotateX : Float -> Body data -> Body data
 rotateX angle =
     Body.rotateAround Axis3d.x (Angle.degrees angle)
 
 
 {-| Rotate a Body around the Y axis.
 -}
+rotateY : Float -> Body data -> Body data
 rotateY angle =
     Body.rotateAround Axis3d.y (Angle.degrees angle)
 
 
 {-| Rotate a Body around the Z axis.
 -}
+rotateZ : Float -> Body data -> Body data
 rotateZ angle =
     Body.rotateAround Axis3d.z (Angle.degrees angle)
 
